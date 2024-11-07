@@ -1,0 +1,1092 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>대출 계산기</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* 모바일에 맞게 최대 너비 설정 */
+        .container {
+            max-width: 480px;
+            margin: 0 auto;
+        }
+        /* 스크롤바 숨기기 */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none; /* IE and Edge */
+            scrollbar-width: none; /* Firefox */
+        }
+        /* 버튼 스타일 */
+        .loan-type-button {
+            flex: 1;
+            padding: 10px;
+            margin: 2px;
+            text-align: center;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+            cursor: pointer;
+        }
+        .loan-type-button.active {
+            background-color: #3b82f6;
+            color: white;
+            border-color: #3b82f6;
+        }
+        /* 드롭다운 너비 조절 */
+        .small-select {
+            max-width: 80px;
+        }
+        /* 드롭다운 화폐 단위 표시 */
+        select option:after {
+            content: '원';
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <!-- 메인 컨테이너 -->
+    <div class="container h-screen overflow-y-auto no-scrollbar">
+        <!-- 고정 헤더 -->
+        <div class="sticky top-0 bg-blue-600 text-white p-4 shadow-md z-10">
+            <h1 class="text-lg font-bold">대출 계산기</h1>
+        </div>
+
+        <!-- 페이지 내용 -->
+        <div class="p-4 space-y-4 pb-24" id="page-content">
+            <!-- 페이지 1 내용 -->
+            <div id="page-1">
+                <!-- 1. 대출분류 -->
+                <div class="bg-white rounded-lg shadow-md p-4">
+                    <label class="block text-sm font-semibold mb-2">1. 대출분류</label>
+                    <div class="flex">
+                        <div id="loan-type-mortgage" class="loan-type-button active">담보대출</div>
+                        <div id="loan-type-jeonse" class="loan-type-button">전세대출</div>
+                    </div>
+                    <div id="sub-loan-type" class="mt-2">
+                        <!-- 세부 대출종류가 여기에 표시됩니다 -->
+                    </div>
+                </div>
+
+                <!-- 2. 소개부동산, 계약유무, 잔금일 -->
+                <div class="bg-white rounded-lg shadow-md p-4">
+                    <div class="grid grid-cols-3 gap-2">
+                        <div>
+                            <label class="block text-sm font-semibold mb-2">소개부동산</label>
+                            <select id="real-estate" class="w-full p-2 border rounded bg-white text-sm">
+                                <option value="">선택</option>
+                                <option value="부동산A">부동산A</option>
+                                <option value="부동산B">부동산B</option>
+                                <option value="신규">신규 부동산</option>
+                            </select>
+                            <input type="text" id="new-real-estate" placeholder="부동산명 입력" class="w-full p-2 border rounded mt-2 text-sm" style="display: none;">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold mb-2">계약유무</label>
+                            <select id="contract-status" class="w-full p-2 border rounded bg-white text-sm">
+                                <option value="">선택</option>
+                                <option value="계약전">계약전</option>
+                                <option value="가계약">가계약</option>
+                                <option value="계약완료">계약완료</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold mb-2">잔금일</label>
+                            <input type="date" id="balance-date" class="w-full p-2 border rounded text-sm">
+                            <p id="d-day" class="text-sm mt-1"></p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. 지역, 주택보유 상태, 다자녀수 -->
+                <div class="bg-white rounded-lg shadow-md p-4">
+                    <div class="grid grid-cols-3 gap-2">
+                        <div>
+                            <label class="block text-sm font-semibold mb-2">지역</label>
+                            <select id="area-type" class="w-full p-2 border rounded bg-white text-sm">
+                                <option value="">선택</option>
+                                <option value="일반지역">일반지역</option>
+                                <option value="규제지역">규제지역</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold mb-2">주택보유 상태</label>
+                            <select id="house-status" class="w-full p-2 border rounded bg-white text-sm">
+                                <option value="">선택</option>
+                                <option value="무주택">무주택</option>
+                                <option value="일시적1주택">일시적1주택</option>
+                                <option value="1주택">1주택</option>
+                                <option value="일시적2주택">일시적2주택</option>
+                                <option value="규제지역 1주택">규제지역 1주택</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold mb-2">다자녀수</label>
+                            <select id="children-count" class="w-full p-2 border rounded bg-white text-sm">
+                                <option value="">선택</option>
+                                <option value="0명">0명</option>
+                                <option value="1명">1명</option>
+                                <option value="2명">2명</option>
+                                <option value="3명 이상">3명 이상</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 4. 물건지 정보 -->
+                <div class="bg-white rounded-lg shadow-md p-4">
+                    <div class="grid grid-cols-3 gap-2">
+                        <select id="apartment-name" class="p-2 border rounded bg-white text-sm">
+                            <option value="">아파트명</option>
+                            <!-- 아파트명 옵션 추가 -->
+                        </select>
+                        <select id="area" class="p-2 border rounded bg-white text-sm">
+                            <option value="">전용면적</option>
+                            <!-- 전용면적 옵션 추가 -->
+                        </select>
+                        <p id="market-price" class="text-sm mt-2">시세 결과값: <span id="market-price-value">0원</span></p>
+                    </div>
+                </div>
+
+                <!-- 4-1. 전세대출 클릭 시 오픈되는 보증금 및 월세 -->
+                <div id="jeonse-deposit-section" class="bg-white rounded-lg shadow-md p-4" style="display: none;">
+                    <label class="block text-sm font-semibold mb-2">보증금 및 월세</label>
+                    <div class="grid grid-cols-1 gap-2">
+                        <!-- 보증금 입력 -->
+                        <div class="flex items-center">
+                            <label class="mr-2 text-sm font-semibold">보증금:</label>
+                            <select id="deposit-hundred-million" class="p-2 border rounded bg-white text-sm small-select">
+                                <!-- 옵션은 JavaScript로 동적으로 추가됩니다 -->
+                            </select>
+                            <select id="deposit-ten-million" class="p-2 border rounded bg-white text-sm small-select">
+                                <!-- 옵션은 JavaScript로 동적으로 추가됩니다 -->
+                            </select>
+                            <select id="deposit-million" class="p-2 border rounded bg-white text-sm small-select">
+                                <!-- 옵션은 JavaScript로 동적으로 추가됩니다 -->
+                            </select>
+                            <p id="deposit-total" class="text-sm ml-2">합계: 0원</p>
+                        </div>
+                        <!-- 월세 입력 -->
+                        <div class="flex items-center mt-2">
+                            <label class="mr-2 text-sm font-semibold">월세:</label>
+                            <select id="rent-million" class="p-2 border rounded bg-white text-sm small-select">
+                                <!-- 옵션은 JavaScript로 동적으로 추가됩니다 -->
+                            </select>
+                            <select id="rent-hundred-thousand" class="p-2 border rounded bg-white text-sm small-select">
+                                <!-- 옵션은 JavaScript로 동적으로 추가됩니다 -->
+                            </select>
+                            <select id="rent-ten-thousand" class="p-2 border rounded bg-white text-sm small-select">
+                                <!-- 옵션은 JavaScript로 동적으로 추가됩니다 -->
+                            </select>
+                            <p id="rent-total" class="text-sm ml-2">합계: 0원</p>
+                        </div>
+                        <!-- 계산 결과 -->
+                        <div class="flex items-center mt-2">
+                            <p class="text-sm font-semibold">보증금 합계 - (월세 합계 × 25): <span id="deposit-rent-result">0원</span></p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 5. 선순위 채권 -->
+                <div class="bg-white rounded-lg shadow-md p-4">
+                    <div class="flex justify-between items-center mb-2">
+                        <label class="text-sm font-semibold">5. 선순위 채권</label>
+                        <button id="add-debt" class="text-blue-600 text-lg">+</button>
+                    </div>
+                    <div id="senior-debts">
+                        <!-- 선순위 채권 항목들이 여기에 추가됩니다 -->
+                    </div>
+                    <!-- 선순위 채권 합계 -->
+                    <p class="text-sm mt-2">선순위 채권 총합계: <span id="senior-debt-total">0원</span></p>
+                </div>
+
+                <!-- 6. 연소득 -->
+                <div class="bg-white rounded-lg shadow-md p-4">
+                    <label class="block text-sm font-semibold mb-2">6. 연소득</label>
+                    <div class="mb-2">
+                        <label>
+                            <input type="radio" name="maritalStatus" value="미혼" checked> 미혼
+                        </label>
+                        <label class="ml-4">
+                            <input type="radio" name="maritalStatus" value="기혼"> 기혼
+                        </label>
+                    </div>
+                    <div id="income-section">
+                        <!-- 연소득 입력 섹션 -->
+                    </div>
+                    <!-- 연소득 합계 -->
+                    <p class="text-sm mt-2">연소득 합계: <span id="income-total">0원</span></p>
+                </div>
+
+                <!-- 7. 보유채무 -->
+                <div class="bg-white rounded-lg shadow-md p-4">
+                    <div class="flex justify-between items-center mb-2">
+                        <label class="text-sm font-semibold">7. 보유채무</label>
+                        <button id="add-debt-holder" class="text-blue-600 text-lg">+</button>
+                    </div>
+                    <div id="existing-debts">
+                        <!-- 보유채무 항목들이 여기에 추가됩니다 -->
+                    </div>
+                    <!-- 보유채무 합계 -->
+                    <p class="text-sm mt-2">보유채무 총합계: <span id="existing-debt-total">0원</span></p>
+                </div>
+
+                <!-- 7-1. 신용등급 (전세대출 선택 시) -->
+                <div id="credit-score-section" class="bg-white rounded-lg shadow-md p-4" style="display: none;">
+                    <label class="block text-sm font-semibold mb-2">신용점수</label>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-semibold mb-2">KCB</label>
+                            <div class="flex items-center">
+                                <select id="kcb-hundreds" class="p-2 border rounded bg-white text-sm small-select">
+                                    <!-- 옵션은 JavaScript로 동적으로 추가됩니다 -->
+                                </select>
+                                <label class="ml-1 text-sm">백</label>
+                                <select id="kcb-tens" class="p-2 border rounded bg-white text-sm small-select">
+                                    <!-- 옵션은 JavaScript로 동적으로 추가됩니다 -->
+                                </select>
+                                <label class="ml-1 text-sm">십</label>
+                                <select id="kcb-ones" class="p-2 border rounded bg-white text-sm small-select">
+                                    <!-- 옵션은 JavaScript로 동적으로 추가됩니다 -->
+                                </select>
+                                <label class="ml-1 text-sm">일</label>
+                                <p id="kcb-score" class="text-sm ml-2">점수: 0</p>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold mb-2">NICE</label>
+                            <div class="flex items-center">
+                                <select id="nice-hundreds" class="p-2 border rounded bg-white text-sm small-select">
+                                    <!-- 옵션은 JavaScript로 동적으로 추가됩니다 -->
+                                </select>
+                                <label class="ml-1 text-sm">백</label>
+                                <select id="nice-tens" class="p-2 border rounded bg-white text-sm small-select">
+                                    <!-- 옵션은 JavaScript로 동적으로 추가됩니다 -->
+                                </select>
+                                <label class="ml-1 text-sm">십</label>
+                                <select id="nice-ones" class="p-2 border rounded bg-white text-sm small-select">
+                                    <!-- 옵션은 JavaScript로 동적으로 추가됩니다 -->
+                                </select>
+                                <label class="ml-1 text-sm">일</label>
+                                <p id="nice-score" class="text-sm ml-2">점수: 0</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 8. 필요금액 및 대출기간 -->
+                <div class="bg-white rounded-lg shadow-md p-4">
+                    <div class="flex items-center">
+                        <label class="block text-sm font-semibold mb-2 mr-2">필요금액</label>
+                        <select id="required-hundred-million" class="p-2 border rounded bg-white text-sm small-select">
+                            <!-- 옵션은 JavaScript로 동적으로 추가됩니다 -->
+                        </select>
+                        <select id="required-ten-million" class="p-2 border rounded bg-white text-sm small-select">
+                            <!-- 옵션은 JavaScript로 동적으로 추가됩니다 -->
+                        </select>
+                        <select id="required-million" class="p-2 border rounded bg-white text-sm small-select">
+                            <!-- 옵션은 JavaScript로 동적으로 추가됩니다 -->
+                        </select>
+                        <p id="required-total" class="text-sm ml-2">합계: 0원</p>
+                        <!-- 기간 추가 -->
+                        <label class="block text-sm font-semibold mb-2 ml-4 mr-2">기간</label>
+                        <select id="loan-duration" class="p-2 border rounded bg-white text-sm">
+                            <option value="1년">1년</option>
+                            <option value="2년">2년</option>
+                            <option value="7년">7년</option>
+                            <option value="10년">10년</option>
+                            <option value="15년">15년</option>
+                            <option value="20년">20년</option>
+                            <option value="25년">25년</option>
+                            <option value="30년">30년</option>
+                            <option value="35년">35년</option>
+                            <option value="40년">40년</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 페이지 2 내용 -->
+            <div id="page-2" style="display: none;">
+                <!-- 1. 담보대출 또는 전세대출에 따른 옵션 -->
+                <div id="loan-options" class="bg-white rounded-lg shadow-md p-4">
+                    <!-- 내용은 아래에서 JavaScript로 생성됩니다 -->
+                </div>
+
+                <!-- 2. 결과값 -->
+                <div id="loan-results" class="bg-white rounded-lg shadow-md p-4">
+                    <!-- 결과값이 여기에 표시됩니다 -->
+                    <p class="text-sm font-semibold mb-2">결과값</p>
+                    <div id="result-fields">
+                        <!-- 결과값 필드가 여기에 추가됩니다 -->
+                    </div>
+                </div>
+
+                <!-- 3. 특이 사항 및 메모 -->
+                <div class="bg-white rounded-lg shadow-md p-4">
+                    <label class="block text-sm font-semibold mb-2">특이 사항 및 메모</label>
+                    <input type="text" id="customer-name" class="w-full p-2 border rounded mb-2" placeholder="고객 이름 입력">
+                    <textarea id="notes" class="w-full p-2 border rounded h-32" placeholder="특이 사항을 입력하세요."></textarea>
+                </div>
+            </div>
+        </div>
+
+        <!-- 하단 네비게이션 -->
+        <div class="fixed bottom-0 left-0 right-0 p-4 bg-white border-t shadow-lg">
+            <div class="flex gap-4 max-w-sm mx-auto">
+                <button id="prev-button" class="flex-1 py-3 bg-gray-600 text-white rounded-lg font-semibold" style="display: none;">이전</button>
+                <button id="next-button" class="flex-1 py-3 bg-blue-600 text-white rounded-lg font-semibold">다음</button>
+                <button id="save-button" class="flex-1 py-3 bg-green-600 text-white rounded-lg font-semibold" style="display: none;">저장</button>
+                <button id="reset-button" class="flex-1 py-3 border border-red-600 text-red-600 rounded-lg font-semibold" style="display: none;">초기화</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript 코드 -->
+    <script>
+        // 현재 페이지
+        let currentPage = 1;
+
+        // 대출분류 버튼 선택
+        let loanType = '담보대출'; // 기본값 담보대출
+        document.getElementById('loan-type-mortgage').addEventListener('click', function() {
+            loanType = '담보대출';
+            this.classList.add('active');
+            document.getElementById('loan-type-jeonse').classList.remove('active');
+            renderSubLoanType();
+            document.getElementById('jeonse-deposit-section').style.display = 'none';
+            document.getElementById('credit-score-section').style.display = 'none';
+        });
+
+        document.getElementById('loan-type-jeonse').addEventListener('click', function() {
+            loanType = '전세대출';
+            this.classList.add('active');
+            document.getElementById('loan-type-mortgage').classList.remove('active');
+            renderSubLoanType();
+            document.getElementById('jeonse-deposit-section').style.display = 'block';
+            document.getElementById('credit-score-section').style.display = 'block';
+        });
+
+        // 페이지 전환
+        document.getElementById('next-button').addEventListener('click', function() {
+            currentPage = 2;
+            document.getElementById('page-1').style.display = 'none';
+            document.getElementById('page-2').style.display = 'block';
+            document.getElementById('prev-button').style.display = 'block';
+            document.getElementById('next-button').style.display = 'none';
+            document.getElementById('save-button').style.display = 'block';
+            document.getElementById('reset-button').style.display = 'block';
+            renderLoanOptions();
+            calculateResults();
+        });
+
+        document.getElementById('prev-button').addEventListener('click', function() {
+            currentPage = 1;
+            document.getElementById('page-1').style.display = 'block';
+            document.getElementById('page-2').style.display = 'none';
+            document.getElementById('prev-button').style.display = 'none';
+            document.getElementById('next-button').style.display = 'block';
+            document.getElementById('save-button').style.display = 'none';
+            document.getElementById('reset-button').style.display = 'none';
+        });
+
+        // 저장 버튼 클릭 시 (구글시트와 연동 필요)
+        document.getElementById('save-button').addEventListener('click', function() {
+            alert('데이터가 저장되었습니다.');
+            // 구글시트에 저장하는 로직을 추가하세요.
+        });
+
+        // 초기화 버튼 클릭 시
+        document.getElementById('reset-button').addEventListener('click', function() {
+            if (confirm('모든 입력값을 초기화하시겠습니까?')) {
+                location.reload();
+            }
+        });
+
+        // 소개부동산 선택 시 신규 부동산 입력 필드 표시
+        document.getElementById('real-estate').addEventListener('change', function() {
+            if (this.value === '신규') {
+                document.getElementById('new-real-estate').style.display = 'block';
+            } else {
+                document.getElementById('new-real-estate').style.display = 'none';
+            }
+        });
+
+        // 잔금일 D-Day 계산
+        document.getElementById('balance-date').addEventListener('change', function() {
+            const today = new Date();
+            const balanceDate = new Date(this.value);
+            const diffTime = balanceDate - today;
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            document.getElementById('d-day').innerText = `잔금일까지 D-${diffDays}일`;
+        });
+
+        // 대출분류에 따른 세부 옵션 표시
+        function renderSubLoanType() {
+            const subLoanTypeDiv = document.getElementById('sub-loan-type');
+            subLoanTypeDiv.innerHTML = '';
+
+            if (loanType === '담보대출') {
+                const select = document.createElement('select');
+                select.className = 'w-full p-2 border rounded bg-white text-sm mb-2';
+                select.id = 'collateral-type';
+                select.innerHTML = `
+                    <option value="">세부 대출종류 선택</option>
+                    <option value="구매자금">구매자금</option>
+                    <option value="생활안정자금">생활안정자금</option>
+                    <option value="대환자금">대환자금</option>
+                    <option value="생활+대환자금">생활+대환자금</option>
+                `;
+                subLoanTypeDiv.appendChild(select);
+            } else if (loanType === '전세대출') {
+                const select = document.createElement('select');
+                select.className = 'w-full p-2 border rounded bg-white text-sm mb-2';
+                select.id = 'jeonse-type';
+                select.innerHTML = `
+                    <option value="">세부 대출종류 선택</option>
+                    <option value="보증서 말소">보증서 말소</option>
+                    <option value="말소조건 없음">말소조건 없음</option>
+                `;
+                subLoanTypeDiv.appendChild(select);
+            }
+        }
+
+        // 초기 세부 옵션 렌더링
+        renderSubLoanType();
+
+        // 옵션을 동적으로 생성하는 함수
+        function populateSelectOptions() {
+            // 0부터 100까지의 억 단위 옵션 생성
+            const hundredMillionOptions = generateOptions(0, 100, '억');
+            // 0부터 9까지의 천만, 백만, 십만, 만, 천 단위 옵션 생성
+            const tenMillionOptions = generateOptions(0, 9, '천만');
+            const millionOptions = generateOptions(0, 9, '백만');
+            const hundredThousandOptions = generateOptions(0, 9, '십만');
+            const tenThousandOptions = generateOptions(0, 9, '만');
+            const thousandOptions = generateOptions(0, 9, '천');
+
+            // 필요금액 드롭다운에 옵션 추가
+            document.getElementById('required-hundred-million').innerHTML = hundredMillionOptions;
+            document.getElementById('required-ten-million').innerHTML = tenMillionOptions;
+            document.getElementById('required-million').innerHTML = millionOptions;
+
+            // 보증금 드롭다운에 옵션 추가
+            document.getElementById('deposit-hundred-million').innerHTML = hundredMillionOptions;
+            document.getElementById('deposit-ten-million').innerHTML = tenMillionOptions;
+            document.getElementById('deposit-million').innerHTML = millionOptions;
+
+            // 월세 드롭다운에 옵션 추가
+            document.getElementById('rent-million').innerHTML = millionOptions;
+            document.getElementById('rent-hundred-thousand').innerHTML = hundredThousandOptions;
+            document.getElementById('rent-ten-thousand').innerHTML = tenThousandOptions;
+
+            // 신용점수 드롭다운에 옵션 추가 (0부터 9까지)
+            const creditScoreOptions = generateOptions(0, 9, '', false);
+            document.getElementById('kcb-hundreds').innerHTML = creditScoreOptions;
+            document.getElementById('kcb-tens').innerHTML = creditScoreOptions;
+            document.getElementById('kcb-ones').innerHTML = creditScoreOptions;
+            document.getElementById('nice-hundreds').innerHTML = creditScoreOptions;
+            document.getElementById('nice-tens').innerHTML = creditScoreOptions;
+            document.getElementById('nice-ones').innerHTML = creditScoreOptions;
+        }
+
+        // 옵션 생성 함수
+        function generateOptions(start, end, unit = '', reverse = false) {
+            let options = '';
+            if (reverse) {
+                for (let i = start; i >= end; i--) {
+                    options += `<option value="${i}">${i}${unit}</option>`;
+                }
+            } else {
+                for (let i = start; i <= end; i++) {
+                    options += `<option value="${i}">${i}${unit}</option>`;
+                }
+            }
+            return options;
+        }
+
+        // 페이지 로드 시 옵션을 동적으로 생성
+        window.onload = function() {
+            populateSelectOptions();
+            renderIncomeSection(); // 초기 소득 섹션 렌더링
+        };
+
+        // 보증금 및 월세 합계 계산
+        function calculateDepositTotal() {
+            const hundredMillion = parseInt(document.getElementById('deposit-hundred-million').value) || 0;
+            const tenMillion = parseInt(document.getElementById('deposit-ten-million').value) || 0;
+            const million = parseInt(document.getElementById('deposit-million').value) || 0;
+            const total = (hundredMillion * 100000000) + (tenMillion * 10000000) + (million * 1000000);
+            document.getElementById('deposit-total').innerText = `합계: ${total.toLocaleString()}원`;
+            calculateDepositRentResult();
+        }
+
+        function calculateRentTotal() {
+            const million = parseInt(document.getElementById('rent-million').value) || 0;
+            const hundredThousand = parseInt(document.getElementById('rent-hundred-thousand').value) || 0;
+            const tenThousand = parseInt(document.getElementById('rent-ten-thousand').value) || 0;
+            const total = (million * 1000000) + (hundredThousand * 100000) + (tenThousand * 10000);
+            document.getElementById('rent-total').innerText = `합계: ${total.toLocaleString()}원`;
+            calculateDepositRentResult();
+        }
+
+        function calculateDepositRentResult() {
+            const depositTotalText = document.getElementById('deposit-total').innerText.replace(/[^0-9]/g, '');
+            const rentTotalText = document.getElementById('rent-total').innerText.replace(/[^0-9]/g, '');
+            const depositTotal = parseInt(depositTotalText) || 0;
+            const rentTotal = parseInt(rentTotalText) || 0;
+            const result = depositTotal - (rentTotal * 25);
+            document.getElementById('deposit-rent-result').innerText = `${result.toLocaleString()}원`;
+        }
+
+        document.getElementById('deposit-hundred-million').addEventListener('change', calculateDepositTotal);
+        document.getElementById('deposit-ten-million').addEventListener('change', calculateDepositTotal);
+        document.getElementById('deposit-million').addEventListener('change', calculateDepositTotal);
+
+        document.getElementById('rent-million').addEventListener('change', calculateRentTotal);
+        document.getElementById('rent-hundred-thousand').addEventListener('change', calculateRentTotal);
+        document.getElementById('rent-ten-thousand').addEventListener('change', calculateRentTotal);
+
+        // 선순위 채권 추가 및 관리
+        let seniorDebtCount = 0;
+        document.getElementById('add-debt').addEventListener('click', function() {
+            seniorDebtCount++;
+            const debtDiv = document.createElement('div');
+            debtDiv.className = 'mb-4 p-2 border rounded';
+            debtDiv.id = `senior-debt-${seniorDebtCount}`;
+            debtDiv.innerHTML = `
+                <div class="flex justify-between items-center">
+                    <div class="flex items-center">
+                        <select class="p-2 border rounded bg-white text-sm mr-2 small-select">
+                            <option value="담보">담보</option>
+                            <option value="전세 보증금">전세 보증금</option>
+                            <option value="선순위">선순위</option>
+                        </select>
+                        <select class="p-2 border rounded bg-white text-sm mr-2 small-select">
+                            <option value="은행A">은행A</option>
+                            <option value="은행B">은행B</option>
+                            <option value="신규">신규</option>
+                        </select>
+                        <select class="p-2 border rounded bg-white text-sm debt-hundred-million small-select">
+                            ${generateOptions(0, 100, '억')}
+                        </select>
+                        <select class="p-2 border rounded bg-white text-sm debt-ten-million small-select">
+                            ${generateOptions(0, 9, '천만')}
+                        </select>
+                        <select class="p-2 border rounded bg-white text-sm debt-million small-select">
+                            ${generateOptions(0, 9, '백만')}
+                        </select>
+                        <p class="text-sm ml-2 debt-total">합계: 0원</p>
+                    </div>
+                </div>
+                <div class="flex items-center mt-2">
+                    <select class="p-2 border rounded bg-white text-sm mr-2 small-select">
+                        <option value="유지">유지</option>
+                        <option value="전체말소">전체말소</option>
+                        <option value="일부말소">일부말소</option>
+                    </select>
+                    <select class="p-2 border rounded bg-white text-sm maintenance-hundred-million small-select">
+                        ${generateOptions(0, 100, '억')}
+                    </select>
+                    <select class="p-2 border rounded bg-white text-sm maintenance-ten-million small-select">
+                        ${generateOptions(0, 9, '천만')}
+                    </select>
+                    <select class="p-2 border rounded bg-white text-sm maintenance-million small-select">
+                        ${generateOptions(0, 9, '백만')}
+                    </select>
+                    <p class="text-sm ml-2 maintenance-total">합계: 0원</p>
+                    <button onclick="removeSeniorDebt(${seniorDebtCount})" class="text-red-600 text-lg ml-2">-</button>
+                </div>
+            `;
+            document.getElementById('senior-debts').appendChild(debtDiv);
+
+            // 이벤트 리스너 추가
+            const debtSection = debtDiv;
+            const debtHundredMillion = debtSection.querySelector('.debt-hundred-million');
+            const debtTenMillion = debtSection.querySelector('.debt-ten-million');
+            const debtMillion = debtSection.querySelector('.debt-million');
+            const debtTotal = debtSection.querySelector('.debt-total');
+
+            const maintenanceHundredMillion = debtSection.querySelector('.maintenance-hundred-million');
+            const maintenanceTenMillion = debtSection.querySelector('.maintenance-ten-million');
+            const maintenanceMillion = debtSection.querySelector('.maintenance-million');
+            const maintenanceTotal = debtSection.querySelector('.maintenance-total');
+
+            function calculateDebtTotal() {
+                const h = parseInt(debtHundredMillion.value) || 0;
+                const t = parseInt(debtTenMillion.value) || 0;
+                const m = parseInt(debtMillion.value) || 0;
+                const total = (h * 100000000) + (t * 10000000) + (m * 1000000);
+                debtTotal.innerText = `합계: ${total.toLocaleString()}원`;
+                calculateSeniorDebtTotal();
+            }
+
+            function calculateMaintenanceTotal() {
+                const h = parseInt(maintenanceHundredMillion.value) || 0;
+                const t = parseInt(maintenanceTenMillion.value) || 0;
+                const m = parseInt(maintenanceMillion.value) || 0;
+                const total = (h * 100000000) + (t * 10000000) + (m * 1000000);
+                maintenanceTotal.innerText = `합계: ${total.toLocaleString()}원`;
+                calculateSeniorDebtTotal();
+            }
+
+            debtHundredMillion.addEventListener('change', calculateDebtTotal);
+            debtTenMillion.addEventListener('change', calculateDebtTotal);
+            debtMillion.addEventListener('change', calculateDebtTotal);
+
+            maintenanceHundredMillion.addEventListener('change', calculateMaintenanceTotal);
+            maintenanceTenMillion.addEventListener('change', calculateMaintenanceTotal);
+            maintenanceMillion.addEventListener('change', calculateMaintenanceTotal);
+        });
+
+        function removeSeniorDebt(id) {
+            const debtDiv = document.getElementById(`senior-debt-${id}`);
+            debtDiv.remove();
+            calculateSeniorDebtTotal();
+        }
+
+        function calculateSeniorDebtTotal() {
+            let total = 0;
+            const debtTotals = document.querySelectorAll('.debt-total');
+            debtTotals.forEach(dt => {
+                const text = dt.innerText.replace(/[^0-9]/g, '');
+                total += parseInt(text) || 0;
+            });
+            document.getElementById('senior-debt-total').innerText = `${total.toLocaleString()}원`;
+        }
+
+        // 연소득 입력 섹션 생성
+        document.querySelectorAll('input[name="maritalStatus"]').forEach(radio => {
+            radio.addEventListener('change', renderIncomeSection);
+        });
+
+        function renderIncomeSection() {
+            const status = document.querySelector('input[name="maritalStatus"]:checked').value;
+            const incomeSection = document.getElementById('income-section');
+            incomeSection.innerHTML = '';
+
+            if (status === '미혼') {
+                // 미혼일 경우
+                addIncomeField(incomeSection, '본인');
+            } else {
+                // 기혼일 경우
+                addIncomeField(incomeSection, '본인');
+                addIncomeField(incomeSection, '배우자');
+            }
+        }
+
+        function addIncomeField(container, person) {
+            const div = document.createElement('div');
+            div.className = 'mb-4';
+            div.innerHTML = `
+                <h3 class="text-sm font-semibold mb-2">■ ${person} 소득</h3>
+                <h4 class="text-sm font-semibold mb-1">기본소득</h4>
+                <div class="income-section">
+                    <div class="flex items-center mb-2">
+                        <select class="p-2 border rounded bg-white text-sm income-type small-select">
+                            <option value="근로소득">근로소득</option>
+                            <option value="사업소득">사업소득</option>
+                            <option value="프리랜서">프리랜서</option>
+                            <option value="연금소득">연금소득</option>
+                            <option value="24백만원 이하이거나 무소득">24백만원 이하이거나 무소득</option>
+                        </select>
+                        <select class="p-2 border rounded bg-white text-sm income-hundred-million small-select">
+                            ${generateOptions(0, 100, '억')}
+                        </select>
+                        <select class="p-2 border rounded bg-white text-sm income-ten-million small-select">
+                            ${generateOptions(0, 9, '천만')}
+                        </select>
+                        <select class="p-2 border rounded bg-white text-sm income-million small-select">
+                            ${generateOptions(0, 9, '백만')}
+                        </select>
+                        <button class="text-blue-600 ml-2" onclick="addIncomeRow(this)">+</button>
+                        <button class="text-red-600 ml-1" onclick="removeIncomeRow(this)">-</button>
+                    </div>
+                </div>
+                <p class="text-sm income-total">합계: 0원</p>
+                <div class="estimated-income-section" style="display: none;">
+                    <h4 class="text-sm font-semibold mb-1">추정소득</h4>
+                    <div class="flex items-center mb-2">
+                        <select class="p-2 border rounded bg-white text-sm estimated-income-type small-select">
+                            <option value="신용카드">신용카드</option>
+                            <option value="의료보험">의료보험</option>
+                            <option value="연금소득">연금소득</option>
+                        </select>
+                        <!-- 신용카드 선택 시 -->
+                        <div class="credit-card-section" style="display: none;">
+                            <select class="p-2 border rounded bg-white text-sm estimated-income-ten-million small-select">
+                                ${generateOptions(0, 9, '천만')}
+                            </select>
+                            <select class="p-2 border rounded bg-white text-sm estimated-income-million small-select">
+                                ${generateOptions(0, 9, '백만')}
+                            </select>
+                            <select class="p-2 border rounded bg-white text-sm estimated-income-hundred-thousand small-select">
+                                ${generateOptions(0, 9, '십만')}
+                            </select>
+                        </div>
+                        <!-- 의료보험 또는 연금소득 선택 시 -->
+                        <div class="insurance-section" style="display: none;">
+                            <select class="p-2 border rounded bg-white text-sm estimated-income-hundred-thousand small-select">
+                                ${generateOptions(0, 9, '십만')}
+                            </select>
+                            <select class="p-2 border rounded bg-white text-sm estimated-income-ten-thousand small-select">
+                                ${generateOptions(0, 9, '만')}
+                            </select>
+                            <select class="p-2 border rounded bg-white text-sm estimated-income-thousand small-select">
+                                ${generateOptions(0, 9, '천')}
+                            </select>
+                        </div>
+                        <p class="text-sm ml-2 estimated-income-sum">합계: 0원</p>
+                        <input type="text" class="p-2 border rounded bg-white text-sm ml-2 estimated-income-converted" placeholder="환산값 입력">
+                        <button class="text-red-600 text-lg ml-2" onclick="removeEstimatedIncomeRow(this)">-</button>
+                    </div>
+                </div>
+            `;
+            container.appendChild(div);
+
+            const incomeType = div.querySelector('.income-type');
+            const incomeHundredMillion = div.querySelector('.income-hundred-million');
+            const incomeTenMillion = div.querySelector('.income-ten-million');
+            const incomeMillion = div.querySelector('.income-million');
+            const incomeTotal = div.querySelector('.income-total');
+
+            const estimatedIncomeSection = div.querySelector('.estimated-income-section');
+            const estimatedIncomeType = div.querySelector('.estimated-income-type');
+            const creditCardSection = div.querySelector('.credit-card-section');
+            const insuranceSection = div.querySelector('.insurance-section');
+            const estimatedIncomeSum = div.querySelector('.estimated-income-sum');
+
+            incomeType.addEventListener('change', function() {
+                if (this.value === '24백만원 이하이거나 무소득') {
+                    estimatedIncomeSection.style.display = 'block';
+                } else {
+                    estimatedIncomeSection.style.display = 'none';
+                }
+            });
+
+            estimatedIncomeType.addEventListener('change', function() {
+                if (this.value === '신용카드') {
+                    creditCardSection.style.display = 'flex';
+                    insuranceSection.style.display = 'none';
+                } else {
+                    creditCardSection.style.display = 'none';
+                    insuranceSection.style.display = 'flex';
+                }
+            });
+
+            function calculateIncomeTotal() {
+                let total = 0;
+                const h = parseInt(incomeHundredMillion.value) || 0;
+                const t = parseInt(incomeTenMillion.value) || 0;
+                const m = parseInt(incomeMillion.value) || 0;
+                total += (h * 100000000) + (t * 10000000) + (m * 1000000);
+                incomeTotal.innerText = `합계: ${total.toLocaleString()}원`;
+                calculateIncomeGrandTotal();
+            }
+
+            function calculateEstimatedIncomeSum() {
+                let total = 0;
+                if (estimatedIncomeType.value === '신용카드') {
+                    const t = parseInt(creditCardSection.querySelector('.estimated-income-ten-million').value) || 0;
+                    const m = parseInt(creditCardSection.querySelector('.estimated-income-million').value) || 0;
+                    const h = parseInt(creditCardSection.querySelector('.estimated-income-hundred-thousand').value) || 0;
+                    total += (t * 10000000) + (m * 1000000) + (h * 100000);
+                } else {
+                    const h = parseInt(insuranceSection.querySelector('.estimated-income-hundred-thousand').value) || 0;
+                    const t = parseInt(insuranceSection.querySelector('.estimated-income-ten-thousand').value) || 0;
+                    const th = parseInt(insuranceSection.querySelector('.estimated-income-thousand').value) || 0;
+                    total += (h * 100000) + (t * 10000) + (th * 1000);
+                }
+                estimatedIncomeSum.innerText = `합계: ${total.toLocaleString()}원`;
+                calculateIncomeGrandTotal();
+            }
+
+            incomeHundredMillion.addEventListener('change', calculateIncomeTotal);
+            incomeTenMillion.addEventListener('change', calculateIncomeTotal);
+            incomeMillion.addEventListener('change', calculateIncomeTotal);
+
+            estimatedIncomeType.addEventListener('change', calculateEstimatedIncomeSum);
+            creditCardSection.querySelectorAll('select').forEach(select => {
+                select.addEventListener('change', calculateEstimatedIncomeSum);
+            });
+            insuranceSection.querySelectorAll('select').forEach(select => {
+                select.addEventListener('change', calculateEstimatedIncomeSum);
+            });
+        }
+
+        function addIncomeRow(button) {
+            const parent = button.parentElement.parentElement;
+            const newRow = parent.cloneNode(true);
+            parent.parentElement.insertBefore(newRow, parent.nextSibling);
+
+            // 이벤트 리스너 재설정
+            const incomeHundredMillion = newRow.querySelector('.income-hundred-million');
+            const incomeTenMillion = newRow.querySelector('.income-ten-million');
+            const incomeMillion = newRow.querySelector('.income-million');
+
+            incomeHundredMillion.addEventListener('change', calculateIncomeGrandTotal);
+            incomeTenMillion.addEventListener('change', calculateIncomeGrandTotal);
+            incomeMillion.addEventListener('change', calculateIncomeGrandTotal);
+        }
+
+        function removeIncomeRow(button) {
+            const parent = button.parentElement.parentElement;
+            if (parent.parentElement.children.length > 1) {
+                parent.remove();
+                calculateIncomeGrandTotal();
+            }
+        }
+
+        function removeEstimatedIncomeRow(button) {
+            const parent = button.parentElement.parentElement;
+            parent.remove();
+            calculateIncomeGrandTotal();
+        }
+
+        function calculateIncomeGrandTotal() {
+            let total = 0;
+            const incomeTotals = document.querySelectorAll('.income-total');
+            incomeTotals.forEach(it => {
+                const text = it.innerText.replace(/[^0-9]/g, '');
+                total += parseInt(text) || 0;
+            });
+            const estimatedIncomeSums = document.querySelectorAll('.estimated-income-sum');
+            estimatedIncomeSums.forEach(it => {
+                const text = it.innerText.replace(/[^0-9]/g, '');
+                total += parseInt(text) || 0;
+            });
+            document.getElementById('income-total').innerText = `${total.toLocaleString()}원`;
+        }
+
+        // 보유채무 추가 및 관리
+        let debtHolderCount = 0;
+        document.getElementById('add-debt-holder').addEventListener('click', function() {
+            debtHolderCount++;
+            const debtDiv = document.createElement('div');
+            debtDiv.className = 'mb-4 p-2 border rounded';
+            debtDiv.id = `debt-holder-${debtHolderCount}`;
+            debtDiv.innerHTML = `
+                <div class="flex items-center mb-2">
+                    <select class="w-full p-2 border rounded bg-white text-sm mr-2 small-select">
+                        <option value="본인">본인</option>
+                        <option value="배우자">배우자</option>
+                    </select>
+                    <select class="w-full p-2 border rounded bg-white text-sm mr-2 small-select">
+                        <option value="담보대출">담보대출</option>
+                        <option value="신용대출">신용대출</option>
+                        <option value="한도대출">한도대출</option>
+                        <option value="이주비대출">이주비대출</option>
+                        <option value="오피스텔대출">오피스텔대출</option>
+                        <option value="토지담보대출">토지담보대출</option>
+                        <option value="약관대출">약관대출</option>
+                        <option value="전세대출">전세대출</option>
+                        <option value="자동차할부">자동차할부</option>
+                        <option value="카드할부">카드할부</option>
+                        <option value="현금서비스">현금서비스</option>
+                    </select>
+                    <select class="p-2 border rounded bg-white text-sm existing-debt-hundred-million mr-1 small-select">
+                        ${generateOptions(0, 100, '억')}
+                    </select>
+                    <select class="p-2 border rounded bg-white text-sm existing-debt-ten-million mr-1 small-select">
+                        ${generateOptions(0, 9, '천만')}
+                    </select>
+                    <select class="p-2 border rounded bg-white text-sm existing-debt-million mr-2 small-select">
+                        ${generateOptions(0, 9, '백만')}
+                    </select>
+                    <p class="text-sm existing-debt-total mr-2">합계: 0원</p>
+                </div>
+                <div class="flex items-center">
+                    <select class="w-full p-2 border rounded bg-white text-sm mr-2 small-select">
+                        <option value="유지">유지</option>
+                        <option value="전체상환">전체상환</option>
+                        <option value="부분상환">부분상환</option>
+                    </select>
+                    <select class="p-2 border rounded bg-white text-sm repayment-hundred-million mr-1 small-select">
+                        ${generateOptions(0, 100, '억')}
+                    </select>
+                    <select class="p-2 border rounded bg-white text-sm repayment-ten-million mr-1 small-select">
+                        ${generateOptions(0, 9, '천만')}
+                    </select>
+                    <select class="p-2 border rounded bg-white text-sm repayment-million mr-2 small-select">
+                        ${generateOptions(0, 9, '백만')}
+                    </select>
+                    <p class="text-sm repayment-total mr-2">합계: 0원</p>
+                    <button onclick="removeDebtHolder(${debtHolderCount})" class="text-red-600 text-lg">-</button>
+                </div>
+            `;
+            document.getElementById('existing-debts').appendChild(debtDiv);
+
+            // 이벤트 리스너 추가
+            const debtSection = debtDiv;
+            const debtHundredMillion = debtSection.querySelector('.existing-debt-hundred-million');
+            const debtTenMillion = debtSection.querySelector('.existing-debt-ten-million');
+            const debtMillion = debtSection.querySelector('.existing-debt-million');
+            const debtTotal = debtSection.querySelector('.existing-debt-total');
+
+            const repaymentHundredMillion = debtSection.querySelector('.repayment-hundred-million');
+            const repaymentTenMillion = debtSection.querySelector('.repayment-ten-million');
+            const repaymentMillion = debtSection.querySelector('.repayment-million');
+            const repaymentTotal = debtSection.querySelector('.repayment-total');
+
+            function calculateDebtTotal() {
+                const h = parseInt(debtHundredMillion.value) || 0;
+                const t = parseInt(debtTenMillion.value) || 0;
+                const m = parseInt(debtMillion.value) || 0;
+                const total = (h * 100000000) + (t * 10000000) + (m * 1000000);
+                debtTotal.innerText = `합계: ${total.toLocaleString()}원`;
+                calculateExistingDebtTotal();
+            }
+
+            function calculateRepaymentTotal() {
+                const h = parseInt(repaymentHundredMillion.value) || 0;
+                const t = parseInt(repaymentTenMillion.value) || 0;
+                const m = parseInt(repaymentMillion.value) || 0;
+                const total = (h * 100000000) + (t * 10000000) + (m * 1000000);
+                repaymentTotal.innerText = `합계: ${total.toLocaleString()}원`;
+                calculateExistingDebtTotal();
+            }
+
+            debtHundredMillion.addEventListener('change', calculateDebtTotal);
+            debtTenMillion.addEventListener('change', calculateDebtTotal);
+            debtMillion.addEventListener('change', calculateDebtTotal);
+
+            repaymentHundredMillion.addEventListener('change', calculateRepaymentTotal);
+            repaymentTenMillion.addEventListener('change', calculateRepaymentTotal);
+            repaymentMillion.addEventListener('change', calculateRepaymentTotal);
+        });
+
+        function removeDebtHolder(id) {
+            const debtDiv = document.getElementById(`debt-holder-${id}`);
+            debtDiv.remove();
+            calculateExistingDebtTotal();
+        }
+
+        function calculateExistingDebtTotal() {
+            let total = 0;
+            const debtTotals = document.querySelectorAll('.existing-debt-total');
+            debtTotals.forEach(dt => {
+                const text = dt.innerText.replace(/[^0-9]/g, '');
+                total += parseInt(text) || 0;
+            });
+            document.getElementById('existing-debt-total').innerText = `${total.toLocaleString()}원`;
+        }
+
+        // 신용점수 합계 계산
+        function calculateCreditScore(type) {
+            const hundreds = parseInt(document.getElementById(`${type}-hundreds`).value) || 0;
+            const tens = parseInt(document.getElementById(`${type}-tens`).value) || 0;
+            const ones = parseInt(document.getElementById(`${type}-ones`).value) || 0;
+            const total = (hundreds * 100) + (tens * 10) + ones;
+            document.getElementById(`${type}-score`).innerText = `점수: ${total}`;
+        }
+
+        document.getElementById('kcb-hundreds').addEventListener('change', function() { calculateCreditScore('kcb'); });
+        document.getElementById('kcb-tens').addEventListener('change', function() { calculateCreditScore('kcb'); });
+        document.getElementById('kcb-ones').addEventListener('change', function() { calculateCreditScore('kcb'); });
+
+        document.getElementById('nice-hundreds').addEventListener('change', function() { calculateCreditScore('nice'); });
+        document.getElementById('nice-tens').addEventListener('change', function() { calculateCreditScore('nice'); });
+        document.getElementById('nice-ones').addEventListener('change', function() { calculateCreditScore('nice'); });
+
+        // 필요금액 합계 계산
+        function calculateRequiredTotal() {
+            const hundredMillion = parseInt(document.getElementById('required-hundred-million').value) || 0;
+            const tenMillion = parseInt(document.getElementById('required-ten-million').value) || 0;
+            const million = parseInt(document.getElementById('required-million').value) || 0;
+            const total = (hundredMillion * 100000000) + (tenMillion * 10000000) + (million * 1000000);
+            document.getElementById('required-total').innerText = `합계: ${total.toLocaleString()}원`;
+        }
+
+        document.getElementById('required-hundred-million').addEventListener('change', calculateRequiredTotal);
+        document.getElementById('required-ten-million').addEventListener('change', calculateRequiredTotal);
+        document.getElementById('required-million').addEventListener('change', calculateRequiredTotal);
+
+        // 페이지 2의 대출 옵션 렌더링
+        function renderLoanOptions() {
+            const loanOptionsDiv = document.getElementById('loan-options');
+            loanOptionsDiv.innerHTML = '';
+
+            if (loanType === '담보대출') {
+                // 담보대출 옵션
+                loanOptionsDiv.innerHTML = `
+                    <label class="block text-sm font-semibold mb-2">1. 대출 옵션 선택</label>
+                    <select id="collateral-loan-option" class="w-full p-2 border rounded bg-white text-sm mb-2">
+                        <option value="6개월 변동">6개월 변동</option>
+                        <option value="혼합 원리금균등 5년고정">혼합 원리금균등 5년고정</option>
+                        <option value="혼합 원금균등 5년">혼합 원금균등 5년</option>
+                        <option value="주기 원리금균등">주기 원리금균등</option>
+                        <option value="주기 원금균등">주기 원금균등</option>
+                    </select>
+                `;
+            } else if (loanType === '전세대출') {
+                // 전세대출 옵션
+                loanOptionsDiv.innerHTML = `
+                    <label class="block text-sm font-semibold mb-2">1. 전세대출 상품 선택</label>
+                    <div class="grid grid-cols-2 gap-2">
+                        <select id="jeonse-loan-type" class="w-full p-2 border rounded bg-white text-sm mb-2">
+                            <option value="주신보 전세대출">주신보 전세대출</option>
+                            <option value="서울보증 전세대출">서울보증 전세대출</option>
+                            <option value="도시보증 전세대출">도시보증 전세대출</option>
+                        </select>
+                        <select id="jeonse-loan-option" class="w-full p-2 border rounded bg-white text-sm mb-2">
+                            <!-- 옵션은 선택한 전세대출 상품에 따라 다름 -->
+                        </select>
+                    </div>
+                `;
+                document.getElementById('jeonse-loan-type').addEventListener('change', function() {
+                    const jeonseLoanOption = document.getElementById('jeonse-loan-option');
+                    jeonseLoanOption.innerHTML = '';
+                    if (this.value === '주신보 전세대출') {
+                        jeonseLoanOption.innerHTML = `
+                            <option value="2년 고정">2년 고정</option>
+                            <option value="1년 고정">1년 고정</option>
+                            <option value="6개월 COFIX">6개월 COFIX</option>
+                            <option value="6개월 금융채">6개월 금융채</option>
+                        `;
+                    } else if (this.value === '서울보증 전세대출') {
+                        jeonseLoanOption.innerHTML = `
+                            <option value="2년 고정">2년 고정</option>
+                            <option value="1년 고정">1년 고정</option>
+                            <option value="6개월 COFIX">6개월 COFIX</option>
+                            <option value="6개월 금융채">6개월 금융채</option>
+                        `;
+                    } else if (this.value === '도시보증 전세대출') {
+                        jeonseLoanOption.innerHTML = `
+                            <option value="2년 고정">2년 고정</option>
+                            <option value="1년 고정">1년 고정</option>
+                            <option value="6개월 COFIX">6개월 COFIX</option>
+                            <option value="6개월 금융채">6개월 금융채</option>
+                        `;
+                    }
+                });
+                // 초기 선택값에 따른 옵션 설정
+                document.getElementById('jeonse-loan-type').dispatchEvent(new Event('change'));
+            }
+        }
+
+        // 페이지 2의 결과값 계산 및 표시
+        function calculateResults() {
+            const resultFields = document.getElementById('result-fields');
+            resultFields.innerHTML = '';
+
+            if (loanType === '담보대출') {
+                // 담보대출 결과값
+                resultFields.innerHTML = `
+                    <!-- 결과값 표시 코드 -->
+                `;
+            } else if (loanType === '전세대출') {
+                // 전세대출 결과값
+                resultFields.innerHTML = `
+                    <!-- 결과값 표시 코드 -->
+                `;
+            }
+
+            // 실제로는 구글시트에서 값을 가져와 계산하여 표시해야 합니다.
+        }
+
+        // 초기 렌더링은 window.onload에서 처리합니다.
+    </script>
+</body>
+</html>
